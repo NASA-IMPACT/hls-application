@@ -12,13 +12,14 @@ This repo provides:
 - **Application notebooks** illustrating use cases such as land cover classification, change detection, vegetation monitoring, and more.
 - Supporting scripts and utilities for data processing and visualization.
 
+---
+## 📚 Repository Structure
+
 ```bash
 ├── hls-application/                # Jupyter notebooks for scientific applications
 ├── hls-validation/   # Jupyter notebooks for validation 
 ├── environmental.yml          # Python package dependencies
 └── README.md                 # This README file
-
-
 ---
 
 ## 🚀 Getting Started
@@ -33,4 +34,4 @@ You can install the dependencies using:
 ```bash
 mamba env create -f environment.yml
 
-
+---
