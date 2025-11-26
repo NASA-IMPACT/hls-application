@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files (optional - uncomment if you don't want to track large data files)
+# *.tif
+# *.nc
+# *.h5
+# *.hdf5
+
+# Output directories
+outputs/
+figures/
+*.png
+*.jpg
+*.pdf
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
