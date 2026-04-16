@@ -1,11 +1,20 @@
-name: Fmask Acceptance Test
+name: HLS Validation Suite
 
 on:
   # Manual trigger — engineering team runs this after each container build
   workflow_dispatch:
     inputs:
+      test_type:
+        description: "Which test to run"
+        required: true
+        type: choice
+        options:
+          - fmask
+          - sr
+          - both
+        default: fmask
       candidate_s3_bucket:
-        description: "S3 bucket of the new container output to test"
+        description: "S3 bucket of the new container output"
         required: true
         default: "hls-science-container-testing-018923174646-us-west-2-an"
       candidate_s3_prefix:
@@ -13,17 +22,18 @@ on:
         required: true
         default: "outputs/exp1-recompile/dev/"
       fmask_version:
-        description: "Fmask version label (used in report filename)"
+        description: "Fmask version label"
         required: false
         default: "Fmask5.0"
 
-  # Auto-trigger when science team updates the config (e.g. new golden reference)
+  # Auto-trigger when science team updates either config
   push:
     paths:
       - "hls_validation_framework/config/fmask_acceptance_config.yaml"
+      - "hls_validation_framework/config/sr_regression_config.yaml"
 
 jobs:
-  fmask-acceptance-test:
+  run-validation:
     runs-on: ubuntu-latest
 
     steps:
@@ -47,18 +57,34 @@ jobs:
         run: |
           python - <<'EOF'
           import yaml
-          config_path = "hls_validation_framework/config/fmask_acceptance_config.yaml"
-          with open(config_path) as f:
-              cfg = yaml.safe_load(f)
-          cfg['candidate_s3_bucket'] = "${{ github.event.inputs.candidate_s3_bucket }}"
-          cfg['candidate_s3_prefix'] = "${{ github.event.inputs.candidate_s3_prefix }}"
-          cfg['fmask_version']       = "${{ github.event.inputs.fmask_version }}"
-          with open(config_path, 'w') as f:
-              yaml.dump(cfg, f)
-          print("Config updated with workflow inputs.")
+
+          # Update Fmask config
+          fmask_cfg_path = "hls_validation_framework/config/fmask_acceptance_config.yaml"
+          with open(fmask_cfg_path) as f:
+              fmask_cfg = yaml.safe_load(f)
+          fmask_cfg['candidate_s3_bucket'] = "${{ github.event.inputs.candidate_s3_bucket }}"
+          fmask_cfg['candidate_s3_prefix'] = "${{ github.event.inputs.candidate_s3_prefix }}"
+          fmask_cfg['fmask_version']        = "${{ github.event.inputs.fmask_version }}"
+          with open(fmask_cfg_path, 'w') as f:
+              yaml.dump(fmask_cfg, f)
+
+          # Update SR config
+          sr_cfg_path = "hls_validation_framework/config/sr_regression_config.yaml"
+          with open(sr_cfg_path) as f:
+              sr_cfg = yaml.safe_load(f)
+          sr_cfg['post_s3_bucket'] = "${{ github.event.inputs.candidate_s3_bucket }}"
+          sr_cfg['post_s3_prefix'] = "${{ github.event.inputs.candidate_s3_prefix }}"
+          with open(sr_cfg_path, 'w') as f:
+              yaml.dump(sr_cfg, f)
+
+          print("Configs updated with workflow inputs.")
           EOF
 
       - name: Run Fmask acceptance test
+        if: >
+          github.event_name == 'push' ||
+          github.event.inputs.test_type == 'fmask' ||
+          github.event.inputs.test_type == 'both'
         shell: bash -l {0}
         env:
           AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -67,25 +93,39 @@ jobs:
           AWS_DEFAULT_REGION:    us-west-2
         run: |
           python hls_validation_framework/scripts/run_fmask_validation.py \
-            --config hls_validation_framework/config/fmask_acceptance_config.yaml \
-            --output hls_validation_framework/reports/fmask_validation_ci_${{ github.run_number }}.ipynb
+            --test fmask \
+            --output hls_validation_framework/reports/fmask_ci_${{ github.run_number }}.ipynb
 
-      - name: Convert report to HTML
+      - name: Run SR regression test
+        if: >
+          github.event.inputs.test_type == 'sr' ||
+          github.event.inputs.test_type == 'both'
+        shell: bash -l {0}
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN:     ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION:    us-west-2
+        run: |
+          python hls_validation_framework/scripts/run_fmask_validation.py \
+            --test sr \
+            --output hls_validation_framework/reports/sr_ci_${{ github.run_number }}.ipynb
+
+      - name: Convert reports to HTML
         shell: bash -l {0}
         if: always()
         run: |
-          jupyter nbconvert \
-            --to html \
-            hls_validation_framework/reports/fmask_validation_ci_${{ github.run_number }}.ipynb \
-            --output hls_validation_framework/reports/fmask_validation_ci_${{ github.run_number }}.html
+          for nb in hls_validation_framework/reports/*_ci_${{ github.run_number }}.ipynb; do
+            [ -f "$nb" ] && jupyter nbconvert --to html "$nb"
+          done
 
-      - name: Upload validation report
+      - name: Upload validation reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: fmask-validation-report-${{ github.run_number }}
+          name: hls-validation-reports-${{ github.run_number }}
           path: |
-            hls_validation_framework/reports/fmask_validation_ci_${{ github.run_number }}.html
-            hls_validation_framework/reports/fmask_validation_ci_${{ github.run_number }}.ipynb
+            hls_validation_framework/reports/*_ci_${{ github.run_number }}.html
+            hls_validation_framework/reports/*_ci_${{ github.run_number }}.ipynb
             hls_validation_framework/reports/*.csv
           retention-days: 90

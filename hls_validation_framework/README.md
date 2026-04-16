@@ -1,11 +1,6 @@
-# HLS Fmask Acceptance Test Framework
+# HLS Validation Framework
 
-Repeatable acceptance test suite confirming that a new HLS container correctly applies the validated Fmask algorithm.
-
-> **This is container acceptance testing, not scientific validation.**  
-> The scientific validation of Fmask5 has already been completed. This framework confirms
-> that any new container build reproduces the validated Fmask5 results on a curated set
-> of test cases.
+Repeatable test suite for HLS container validation covering both **surface reflectance band regression** and **Fmask acceptance testing**.
 
 ---
 
@@ -13,26 +8,50 @@ Repeatable acceptance test suite confirming that a new HLS container correctly a
 
 ```
 hls_validation_framework/
-├── HLS_Fmask_acceptance_test.ipynb   # Main acceptance test notebook
-├── environment.yml                    # Conda environment
-├── README.md                          # This file
+├── README.md                              # This file
+├── environment.yml                        # Conda environment
 │
-├── config/
-│   └── fmask_acceptance_config.yaml  # ← Edit this to update test parameters
+├── config/                                # ← All parameters live here, not in notebooks
+│   ├── fmask_acceptance_config.yaml       # Fmask test: golden reference, granule list, thresholds
+│   └── sr_regression_config.yaml         # SR test: pre/post bucket paths, product types
 │
-├── module/                            # Shared utility modules (from hls_validation)
-│   ├── fmask.ipynb                    # Fmask bit-decoding functions
-│   ├── data_access.ipynb              # S3 access helpers
-│   ├── plotting.ipynb                 # Visualization helpers
-│   ├── ultilities.ipynb               # General utilities
-│   └── read_file.ipynb                # File reading helpers
+├── notebooks/
+│   ├── HLS_Fmask_acceptance_test.ipynb   # Tier 2: Fmask acceptance test
+│   └── HLS_validation_general.ipynb      # Tier 1: SR band regression test
+│
+├── module/                                # Shared utility modules
+│   ├── fmask.ipynb                        # Fmask bit-decoding functions
+│   ├── data_access.ipynb                  # S3 access helpers
+│   ├── plotting.ipynb                     # Visualization helpers
+│   ├── ultilities.ipynb                   # General utilities
+│   └── read_file.ipynb                    # File reading helpers
 │
 ├── scripts/
-│   └── run_fmask_validation.py        # Run notebook from command line (Papermill)
+│   └── run_fmask_validation.py            # CLI runner (Papermill) for both notebooks
 │
-└── reports/                           # Generated outputs (gitignored except .gitkeep)
+└── reports/                               # Generated outputs (gitignored)
     └── .gitkeep
 ```
+
+---
+
+## Two-Tier Validation Strategy
+
+### Tier 1 — SR Band Regression Test
+**Notebook:** `notebooks/HLS_validation_general.ipynb`  
+**Config:** `config/sr_regression_config.yaml`  
+**Question:** *Did anything change across all output bands between two container builds?*  
+**Scope:** All `.tif` files — SR bands (B01–B12), VI indices, angles, Fmask.  
+**Comparison:** `prod` container vs `dev` container (pixel-level numerical diff).  
+**When to run:** Every container rebuild.
+
+### Tier 2 — Fmask Acceptance Test
+**Notebook:** `notebooks/HLS_Fmask_acceptance_test.ipynb`  
+**Config:** `config/fmask_acceptance_config.yaml`  
+**Question:** *Did the container correctly apply the validated Fmask algorithm?*  
+**Scope:** `Fmask.tif` files only — bit-decoded per class (cloud/shadow/water/snow).  
+**Comparison:** New container vs **golden reference** (scientifically validated Fmask5 outputs).  
+**When to run:** Every container rebuild touching Fmask; every new Fmask release.
 
 ---
 
@@ -46,7 +65,7 @@ mamba activate lpdaac_vitals
 pip install papermill
 ```
 
-### 2. Set AWS credentials (never hardcode)
+### 2. Set AWS credentials
 
 ```bash
 export AWS_ACCESS_KEY_ID=...
@@ -54,78 +73,56 @@ export AWS_SECRET_ACCESS_KEY=...
 export AWS_SESSION_TOKEN=...
 ```
 
-### 3. Run the test
+### 3. Run tests
+
+**Command line (recommended):**
+```bash
+# Run Fmask acceptance test
+python hls_validation_framework/scripts/run_fmask_validation.py --test fmask
+
+# Run SR regression test
+python hls_validation_framework/scripts/run_fmask_validation.py --test sr
+
+# Run both
+python hls_validation_framework/scripts/run_fmask_validation.py --test fmask
+python hls_validation_framework/scripts/run_fmask_validation.py --test sr
+```
 
 **Interactive (JupyterLab):**
 ```bash
-jupyter lab hls_validation_framework/HLS_Fmask_acceptance_test.ipynb
-```
-
-**Command line (recommended for CI):**
-```bash
-# From repo root
-python hls_validation_framework/scripts/run_fmask_validation.py
+jupyter lab hls_validation_framework/notebooks/
 ```
 
 ---
 
-## How It Works
+## Updating Config for a New Container Build (Engineering Team)
 
-### Test Structure
+Edit `config/sr_regression_config.yaml`:
+```yaml
+pre_s3_prefix:  "outputs/<old-experiment>/prod/"
+post_s3_prefix: "outputs/<new-experiment>/dev/"
+```
 
-| Test set | Size | Pass threshold | Purpose |
-|---|---|---|---|
-| **Curated granules** | ~5–10 granules | 100% pixel agreement | Known Fmask5 improvement cases — must match exactly |
-| **Random sample** | ~25–30 granules | ≥ 99.5% pixel agreement | Broader regression coverage |
-
-Both test sets compare the candidate container output against a **golden reference** —
-the scientifically validated Fmask5 outputs stored in S3.
-
-### Fmask Comparison Method
-
-Unlike surface reflectance bands, Fmask is **bit-encoded** (not a continuous value).  
-Each pixel is decoded into individual class layers before comparison:
-
-| Bit | Class |
-|-----|-------|
-| 1 | Cloud |
-| 2 | Adjacent to cloud |
-| 3 | Cloud shadow |
-| 4 | Snow / Ice |
-| 5 | Water |
-| 6–7 | Aerosol level |
-
-Agreement is measured **per class**, not as raw pixel subtraction.
+No notebook changes needed.
 
 ---
 
 ## Updating for a New Fmask Release (Science Team)
 
-1. Run the validated container on the curated test granules.
-2. Upload output `Fmask.tif` files to the golden reference S3 path:
+1. Upload validated Fmask outputs to:
    ```
    s3://hls-validation/golden-reference/fmask<VERSION>/
    ```
-3. Update `config/fmask_acceptance_config.yaml`:
-   - Bump `fmask_version`
-   - Update `golden_reference_s3_prefix`
-   - Update `curated_granules` with new improvement examples if available
-4. Commit the config change:
-   ```bash
-   git add hls_validation_framework/config/fmask_acceptance_config.yaml
-   git commit -m "Update golden reference to Fmask5.1"
-   git push origin main
-   ```
+2. Edit `config/fmask_acceptance_config.yaml` — bump `fmask_version`, update `golden_reference_s3_prefix`, add new `curated_granules` if applicable.
+3. Commit and push — CI auto-triggers on config file changes.
 
 ---
 
-## CI / Automation
+## CI / GitHub Actions
 
-The GitHub Actions workflow (`.github/workflows/fmask_validation.yml` at repo root)
-can trigger this test automatically.
+Workflow: `.github/workflows/fmask_validation.yml`
 
-**Manual trigger:** Go to GitHub → Actions → "Fmask Acceptance Test" → Run workflow.  
-Input the candidate S3 bucket and prefix for the container build to test.
-
-**Artifacts:** The executed notebook and HTML report are uploaded as GitHub Actions artifacts
-and retained for 90 days.
+**Manual trigger:** GitHub → Actions → "HLS Validation Suite" → Run workflow  
+**Inputs:** `test_type` (fmask / sr / both), candidate S3 bucket and prefix.  
+**Auto-trigger:** Runs when either config file is updated on `main`.  
+**Artifacts:** HTML reports retained 90 days.

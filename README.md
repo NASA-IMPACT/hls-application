@@ -1,6 +1,6 @@
 # HLS Validation Suite
 
-Validation notebooks and container acceptance testing for the **Harmonized Landsat and Sentinel-2 (HLS)** product suite.
+Validation notebooks and repeatable container acceptance testing for the **Harmonized Landsat and Sentinel-2 (HLS)** product suite.
 
 ---
 
@@ -9,50 +9,29 @@ Validation notebooks and container acceptance testing for the **Harmonized Lands
 ```
 hls-validation/
 │
-├── hls_validation/                        # Existing HLS analysis notebooks
-│   ├── HLS_validation_general.ipynb       # SR band container regression test (all bands)
-│   ├── HLS_validation.ipynb               # Original HLS validation notebook
-│   ├── IGARSS_2026_paper_figures.ipynb    # IGARSS 2026 paper figures
-│   └── module/                            # Shared utility modules
-│       ├── fmask.ipynb
-│       ├── data_access.ipynb
-│       ├── plotting.ipynb
-│       ├── statistics.ipynb
-│       ├── time_series.ipynb
-│       └── ultilities.ipynb
-│
-├── hls_validation_framework/              # ← Fmask acceptance test framework
-│   ├── HLS_Fmask_acceptance_test.ipynb    # Main acceptance test notebook
-│   ├── environment.yml
-│   ├── README.md                          # Framework-specific documentation
+├── hls_validation_framework/              # ← Repeatable validation framework
 │   ├── config/
-│   │   └── fmask_acceptance_config.yaml  # Test parameters, granule list, thresholds
-│   ├── module/                            # Shared modules (synced from hls_validation/module)
+│   │   ├── fmask_acceptance_config.yaml  # Fmask test parameters
+│   │   └── sr_regression_config.yaml     # SR regression test parameters
+│   ├── notebooks/
+│   │   ├── HLS_Fmask_acceptance_test.ipynb
+│   │   └── HLS_validation_general.ipynb
+│   ├── module/                            # Shared utility modules
 │   ├── scripts/
 │   │   └── run_fmask_validation.py        # CLI runner (Papermill)
-│   └── reports/                           # Generated reports (gitignored)
+│   └── README.md                          # Framework documentation
+│
+├── hls_validation/                        # Existing analysis notebooks (unchanged)
+│   ├── HLS_validation.ipynb
+│   ├── IGARSS_2026_paper_figures.ipynb
+│   └── module/
 │
 └── .github/
     └── workflows/
-        └── fmask_validation.yml           # GitHub Actions CI workflow
+        └── fmask_validation.yml           # GitHub Actions CI
 ```
 
----
-
-## Two-Tier Validation Strategy
-
-### Tier 1 — SR Band Regression Test
-**Notebook:** `hls_validation/HLS_validation_general.ipynb`  
-**Purpose:** Detect any unintended changes across all output bands (SR + VI + Fmask) between two container builds.  
-**When to run:** Every container rebuild.
-
-### Tier 2 — Fmask Acceptance Test
-**Notebook:** `hls_validation_framework/HLS_Fmask_acceptance_test.ipynb`  
-**Purpose:** Confirm the new container correctly applies the validated Fmask algorithm.  
-**Comparison:** Against a golden reference — the scientifically validated Fmask5 outputs.  
-**When to run:** Every container rebuild that touches Fmask; every new Fmask release.
-
-See [`hls_validation_framework/README.md`](hls_validation_framework/README.md) for full documentation.
+See **[`hls_validation_framework/README.md`](hls_validation_framework/README.md)** for full documentation on how to run the validation suite.
 
 ---
 

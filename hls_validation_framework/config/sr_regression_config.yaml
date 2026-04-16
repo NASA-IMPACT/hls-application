@@ -1,0 +1,56 @@
+# =============================================================================
+# HLS Surface Reflectance Band Regression Test Configuration
+# =============================================================================
+# Used by: notebooks/HLS_validation_general.ipynb
+# Purpose: Detect any unintended numerical changes across ALL output bands
+#          (SR bands, VI indices, angles, Fmask) between two container builds.
+#
+# This is a regression test — it catches unexpected changes.
+# It does NOT validate scientific correctness (see fmask_acceptance_config.yaml
+# for Fmask-specific acceptance testing).
+# =============================================================================
+
+# ── Container builds being compared ──────────────────────────────────────────
+# "pre"  = reference build (older / production container)
+# "post" = candidate build (new container being tested)
+
+pre_s3_bucket:  "hls-science-container-testing-018923174646-us-west-2-an"
+pre_s3_prefix:  "outputs/exp1-recompile/prod/"
+
+post_s3_bucket: "hls-science-container-testing-018923174646-us-west-2-an"
+post_s3_prefix: "outputs/exp1-recompile/dev/"
+
+# ── AWS settings ──────────────────────────────────────────────────────────────
+aws_region: "us-west-2"
+# Credentials are read from environment variables only:
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
+
+# ── Product types to compare ─────────────────────────────────────────────────
+product_types:
+  - "L30"
+  - "S30"
+  - "L30_VI"
+  - "S30_VI"
+
+# ── Date filter (Julian day YYYYDDD, leave blank for all dates) ───────────────
+dates:
+  L30:    ""     # e.g. "2026073" to scope to a single date
+  S30:    ""
+  L30_VI: ""
+  S30_VI: ""
+
+# ── Comparison thresholds ─────────────────────────────────────────────────────
+# A file is flagged if any pixels differ between pre and post.
+# These thresholds determine how to classify the severity of differences.
+thresholds:
+  # Max % of pixels that can differ before flagging as a concern
+  max_pct_nonzero_diff: 0.0     # 0.0 = strict identical (regression test)
+  # Max absolute pixel value difference allowed
+  max_abs_diff: 0
+
+# ── Output settings ──────────────────────────────────────────────────────────
+output:
+  report_dir:     "reports/"
+  save_histograms: true
+  figure_format:  "png"
+  save_csv:       true
