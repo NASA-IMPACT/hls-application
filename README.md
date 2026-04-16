@@ -1,76 +1,62 @@
+# HLS Validation Suite
 
-# HLS Validation and Application Notebooks
-
-Welcome to the **HLS Validation and Application Notebooks** repository! This repository contains Jupyter notebooks and supporting resources for validating the Harmonized Landsat Sentinel (HLS) datasets and demonstrating their practical applications in remote sensing and environmental analysis.
-
----
-
-## 📚 Repository Overview
-
-This repo provides:
-
-- **Validation notebooks** that assess the accuracy and quality of HLS products against reference data.
-- **Application notebooks** illustrating use cases such as land cover classification, change detection, vegetation monitoring, and more.
-- Supporting scripts and utilities for data processing and visualization.
+Validation notebooks and container acceptance testing for the **Harmonized Landsat and Sentinel-2 (HLS)** product suite.
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Python 3.8+  
-- Jupyter Notebook or JupyterLab  
-- Key Python libraries: `numpy`, `pandas`, `matplotlib`, `rasterio`, `xarray`, `geopandas`, `scikit-learn`, `h5py`, etc.
-
-Install the dependencies instructed in each folder seperately 
-
----
-
-## 📂 Repository Structure
+## Repository Structure
 
 ```
-├── hls-notebooks/                # Jupyter notebooks for scientific applications
-├── hls-validation/                # Jupyter notebooks for validation and applications
-└── README.md                 # This README file
+hls-validation/
+│
+├── hls_validation/                        # Existing HLS analysis notebooks
+│   ├── HLS_validation_general.ipynb       # SR band container regression test (all bands)
+│   ├── HLS_validation.ipynb               # Original HLS validation notebook
+│   ├── IGARSS_2026_paper_figures.ipynb    # IGARSS 2026 paper figures
+│   └── module/                            # Shared utility modules
+│       ├── fmask.ipynb
+│       ├── data_access.ipynb
+│       ├── plotting.ipynb
+│       ├── statistics.ipynb
+│       ├── time_series.ipynb
+│       └── ultilities.ipynb
+│
+├── hls_validation_framework/              # ← Fmask acceptance test framework
+│   ├── HLS_Fmask_acceptance_test.ipynb    # Main acceptance test notebook
+│   ├── environment.yml
+│   ├── README.md                          # Framework-specific documentation
+│   ├── config/
+│   │   └── fmask_acceptance_config.yaml  # Test parameters, granule list, thresholds
+│   ├── module/                            # Shared modules (synced from hls_validation/module)
+│   ├── scripts/
+│   │   └── run_fmask_validation.py        # CLI runner (Papermill)
+│   └── reports/                           # Generated reports (gitignored)
+│
+└── .github/
+    └── workflows/
+        └── fmask_validation.yml           # GitHub Actions CI workflow
 ```
 
 ---
 
-## 🛠 Usage
+## Two-Tier Validation Strategy
 
-1. Clone this repository:
+### Tier 1 — SR Band Regression Test
+**Notebook:** `hls_validation/HLS_validation_general.ipynb`  
+**Purpose:** Detect any unintended changes across all output bands (SR + VI + Fmask) between two container builds.  
+**When to run:** Every container rebuild.
 
-    ```bash
-    git clone https://github.com/trangthuyvo0109/hls-application.git
-    cd hls-application
-    ```
+### Tier 2 — Fmask Acceptance Test
+**Notebook:** `hls_validation_framework/HLS_Fmask_acceptance_test.ipynb`  
+**Purpose:** Confirm the new container correctly applies the validated Fmask algorithm.  
+**Comparison:** Against a golden reference — the scientifically validated Fmask5 outputs.  
+**When to run:** Every container rebuild that touches Fmask; every new Fmask release.
 
-2. Launch Jupyter Notebook:
-
-    ```bash
-    jupyter notebook
-    ```
-
-3. Open the notebook of your choice inside the `hls-notebooks/` or `hls-validation` folder and run the cells step-by-step.
+See [`hls_validation_framework/README.md`](hls_validation_framework/README.md) for full documentation.
 
 ---
 
-## 📖 Documentation and References
+## Related Repositories
 
-- [Harmonized Landsat Sentinel (HLS) Product User Guide](https://lpdaac.usgs.gov/documents/1698/HLS_User_Guide_V2.pdf)
-- Relevant research papers and validation methodology references are cited within the notebooks.
-
----
-
-## 📄 License
-
-This repository is licensed under the [MIT License](LICENSE).
-
----
-
-## 📬 Contact
-
-For questions or collaborations, please contact:  
-**Trang Vo** — [trangthuyvo.hcmus@gmail.com](mailto:trangthuyvo.hcmus@gmail.com)
-
+- [hls-science-container](https://github.com/NASA-IMPACT/hls-science-container) — HLS processing container
+- [hls_development](https://github.com/NASA-IMPACT/hls_development) — HLS development tracking

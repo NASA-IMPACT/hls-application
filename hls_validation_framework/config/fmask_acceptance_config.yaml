@@ -1,0 +1,82 @@
+# =============================================================================
+# HLS Fmask Acceptance Test Configuration
+# =============================================================================
+# Update this file when a new Fmask version is released.
+# The notebook (HLS_Fmask_acceptance_test.ipynb) reads all parameters from here.
+# DO NOT hardcode parameters inside the notebook.
+# =============================================================================
+
+# ── Fmask version being tested ────────────────────────────────────────────────
+fmask_version: "Fmask5.0"
+
+# ── Golden reference (scientifically validated Fmask outputs) ─────────────────
+# Update this path when a new Fmask version is validated by the science team.
+golden_reference_s3_bucket: "hls-validation"
+golden_reference_s3_prefix: "golden-reference/fmask5.0/"
+
+# ── New container output to test ──────────────────────────────────────────────
+# Set these to the S3 paths of the container build being validated.
+candidate_s3_bucket: "hls-science-container-testing-018923174646-us-west-2-an"
+candidate_s3_prefix: "outputs/exp1-recompile/dev/"
+
+# ── AWS settings ──────────────────────────────────────────────────────────────
+aws_region: "us-west-2"
+# Credentials are read from environment variables only:
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
+
+# ── Product types to test ─────────────────────────────────────────────────────
+satellite_types:
+  - "S30"
+  - "L30"
+
+# ── Pass/Fail thresholds ──────────────────────────────────────────────────────
+thresholds:
+  # Curated granules: must match golden reference exactly (known improvement cases)
+  curated_pass_pct: 100.0
+  # Random sample: allow a tiny tolerance for floating-point/compression differences
+  random_pass_pct: 99.5
+
+# ── Curated test granules (core test set) ────────────────────────────────────
+# These are granules from the prior Fmask5 scientific validation.
+# They cover the specific scene types where Fmask5 improves over Fmask4.7.
+# Add new entries when new improvement cases are identified.
+#
+# scene_type options:
+#   snow_cloud_confusion  - snow/cloud misclassification (common Fmask4.7 failure)
+#   coastal_water         - water/cloud confusion near coastlines
+#   deep_shadow           - missed cloud shadows
+#   cloud_edge            - cloud boundary accuracy
+#   high_altitude         - thin cirrus detection
+#   other                 - other improvement cases
+# -----------------------------------------------------------------------------
+curated_granules:
+  # TODO: Replace these placeholder entries with real granule IDs from
+  #       the Fmask5 scientific validation (Trang / Qiang to populate).
+  - id: "HLS.S30.TPLACEHOLDER1.2024150T182901.v2.0"
+    satellite: "S30"
+    scene_type: "snow_cloud_confusion"
+    notes: "Replace with real granule — known snow/cloud confusion improvement case"
+
+  - id: "HLS.S30.TPLACEHOLDER2.2024085T083601.v2.0"
+    satellite: "S30"
+    scene_type: "coastal_water"
+    notes: "Replace with real granule — coastal water misclassification case"
+
+  - id: "HLS.L30.TPLACEHOLDER3.2024200T155824.v2.0"
+    satellite: "L30"
+    scene_type: "deep_shadow"
+    notes: "Replace with real granule — deep cloud shadow detection case"
+
+# ── Random sample settings ───────────────────────────────────────────────────
+random_sample:
+  enabled: true
+  size_per_satellite: 15    # number of granules to randomly sample per satellite type
+  seed: 42                  # fixed seed for reproducibility
+
+# ── Output settings ──────────────────────────────────────────────────────────
+output:
+  # Local directory for saving reports and per-granule figures
+  # Use relative path from repo root, or set an absolute path
+  report_dir: "reports/"
+  save_figures: true
+  figure_format: "png"      # png or pdf
