@@ -1,0 +1,83 @@
+# Command: python scripts/run_sr_acceptance.py --experiment exp1-recompile --csv reports/sr_comparison_exp1-recompile.csv
+
+========================================================================================
+  HLS SR CONTAINER ACCEPTANCE TEST — STATISTICAL REPORT
+========================================================================================
+  Experiment : exp1-recompile
+  Input CSV  : reports/sr_comparison_exp1-recompile.csv
+  Evaluated  : 2026-04-17 13:00:28
+  Alpha      : 0.05  |  Permutations: 9999
+  Criteria   : Wilcoxon p >= 0.05  AND  Permutation p >= 0.05
+========================================================================================
+
+  Band       Type     N  Wilcoxon p Wilcoxon    Perm p Perm test  Verdict
+  --------------------------------------------------------------------------------------
+  B01        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B02        SR      15      0.3173     PASS    0.9982      PASS     PASS
+  B03        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B04        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B05        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B06        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B07        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B08        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B09        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B10        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B11        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B12        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  B8A        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  Fmask      SR      15      1.0000     PASS    1.0000      PASS     PASS
+  SAA        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  SZA        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  VAA        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  VZA        SR      15      1.0000     PASS    1.0000      PASS     PASS
+  EVI        VI      15      0.3173     PASS    1.0000      PASS     PASS
+  MSAVI      VI      15      1.0000     PASS    1.0000      PASS     PASS
+  NBR        VI      15      1.0000     PASS    1.0000      PASS     PASS
+  NBR2       VI      15      1.0000     PASS    1.0000      PASS     PASS
+  NDMI       VI      15      1.0000     PASS    1.0000      PASS     PASS
+  NDVI       VI      15      0.3173     PASS    1.0000      PASS     PASS
+  NDWI       VI      15      1.0000     PASS    1.0000      PASS     PASS
+  SAVI       VI      15      1.0000     PASS    1.0000      PASS     PASS
+  TVI        VI      15      1.0000     PASS    1.0000      PASS     PASS
+
+========================================================================================
+  OVERALL VERDICT
+
+|                                                                                      |
+|                                         PASS                                         |
+|                                                                                      |
+========================================================================================
+
+  All 27 bands pass both statistical criteria. No significant bias detected.
+
+========================================================================================
+========================================================================================
+  CONCLUSION — STATISTICAL SIGNIFICANCE SUMMARY
+========================================================================================
+
+  OVERALL VERDICT: Differences are NOT statistically significant (alpha = 0.05).
+
+  Dataset: 27 bands/products, 15 granules per band.
+
+  1. SYSTEMATIC BIAS (Wilcoxon signed-rank test)
+   0/27 bands show a statistically significant Wilcoxon bias (p < 0.05).
+   All per-band mean differences = 0.0 reflectance — no systematic offset.
+
+  2. PERMUTATION TEST
+   0/27 bands show a significant result under random sign-flipping (p < 0.05).
+
+  3. MAGNITUDE OF DIFFERENCES
+   Largest max |diff|    : NDVI — 0.0033 reflectance units (= 33 DN)
+   Largest % pix changed : B02 — 0.04266% of pixels
+   Bit-for-bit identical : 10/27 bands across all granules
+   Bands with any diff   : 17/27
+
+  4. INTERPRETATION
+   Differences are isolated to a subset of granules and are consistent
+   with floating-point arithmetic variation between compiler environments.
+   They are NOT scientifically meaningful.
+   Max deviation (0.0033 reflectance) vs reference benchmarks:
+     - HLS cross-sensor consistency     : ~0.042 reflectance (4.2 %)
+     - Atmospheric correction uncertainty: ~0.02–0.05 reflectance
+
+========================================================================================

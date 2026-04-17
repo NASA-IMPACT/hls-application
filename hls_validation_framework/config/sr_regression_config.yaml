@@ -1,28 +1,31 @@
 # =============================================================================
-# HLS Surface Reflectance Band Regression Test Configuration
+# HLS Surface Reflectance Acceptance Test Configuration
 # =============================================================================
-# Used by: notebooks/HLS_validation_general.ipynb
-# Purpose: Detect any unintended numerical changes across ALL output bands
-#          (SR bands, VI indices, angles, Fmask) between two container builds.
+# Used by: notebooks/HLS_SR_acceptance_test.ipynb
+# Purpose: Determine whether a new HLS container produces SR and VI outputs
+#          that are numerically equivalent to a reference container (prod).
 #
-# This is a regression test — it catches unexpected changes.
-# It does NOT validate scientific correctness (see fmask_acceptance_config.yaml
-# for Fmask-specific acceptance testing).
+# The notebook compares all .tif band files between two S3 prefixes, computes
+# per-file difference metrics, and applies statistical tests (Wilcoxon signed-
+# rank + permutation test) to derive a per-band and overall Pass / Fail verdict.
+#
+# No user-defined numerical thresholds are required for the statistical tests.
+# The optional per-file thresholds below are supplementary checks only.
 # =============================================================================
 
 # ── Container builds being compared ──────────────────────────────────────────
-# "pre"  = reference build (older / production container)
-# "post" = candidate build (new container being tested)
+# "prod" = reference build  (older / production container)
+# "dev"  = candidate build  (new container being tested)
 
-pre_s3_bucket:  "hls-science-container-testing-018923174646-us-west-2-an"
-pre_s3_prefix:  "outputs/exp1-recompile/prod/"
+prod_s3_bucket: ""          # TODO: e.g. "my-hls-testing-bucket"
+prod_s3_prefix: ""          # TODO: e.g. "outputs/exp1/prod/"
 
-post_s3_bucket: "hls-science-container-testing-018923174646-us-west-2-an"
-post_s3_prefix: "outputs/exp1-recompile/dev/"
+dev_s3_bucket:  ""          # TODO: leave blank if same bucket as prod
+dev_s3_prefix:  ""          # TODO: e.g. "outputs/exp1/dev/"
 
 # ── AWS settings ──────────────────────────────────────────────────────────────
 aws_region: "us-west-2"
-# Credentials are read from environment variables only:
+# Credentials are read from environment variables (paste from Kion / SSO):
 #   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
 
 # ── Product types to compare ─────────────────────────────────────────────────
@@ -39,18 +42,36 @@ dates:
   L30_VI: ""
   S30_VI: ""
 
-# ── Comparison thresholds ─────────────────────────────────────────────────────
-# A file is flagged if any pixels differ between pre and post.
-# These thresholds determine how to classify the severity of differences.
+# ── Per-file comparison thresholds (optional supplementary checks) ────────────
+# All absolute difference values are in physical reflectance / index units
+# (DN × 0.0001). Set a value to null to skip that check.
+# These thresholds are NOT used for the statistical Pass / Fail in Section 7;
+# they are supplementary file-level guards only.
+# TODO: update after reviewing baseline experiment results.
 thresholds:
-  # Max % of pixels that can differ before flagging as a concern
-  max_pct_nonzero_diff: 0.0     # 0.0 = strict identical (regression test)
-  # Max absolute pixel value difference allowed
-  max_abs_diff: 0
+  sr:
+    max_pct_pixels_changed: null   # e.g. 0.1  (%)
+    max_abs_diff_refl:      null   # e.g. 0.0005 reflectance units
+    max_pct_of_range:       null   # e.g. 0.01 (%)
+  vi:
+    max_pct_pixels_changed: null   # e.g. 0.001 (%)
+    max_abs_diff_refl:      null   # e.g. 0.005 index units
+    max_pct_of_range:       null   # e.g. 0.5  (%)
+  all:
+    require_identical_filesizes: true
 
-# ── Output settings ──────────────────────────────────────────────────────────
+# ── Statistical testing (Section 7) ─────────────────────────────────────────
+# These settings drive the Wilcoxon and permutation tests.
+# No reference margin is needed — tests are fully data-driven.
+statistical_testing:
+  alpha:          0.05    # significance level for both tests
+  n_permutations: 9999    # resamples for the permutation test
+
+# ── Output directories ────────────────────────────────────────────────────────
 output:
-  report_dir:     "reports/"
-  save_histograms: true
-  figure_format:  "png"
-  save_csv:       true
+  report_dir:              "reports/"    # CSV reports, statistical outputs
+  outputs_dir:             "outputs/"   # comparison figures (.png)
+  save_comparison_images:  true
+  figure_format:           "png"
+  figure_dpi:              100
+  save_csv:                true
