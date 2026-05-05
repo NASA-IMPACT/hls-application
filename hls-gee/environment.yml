@@ -1,0 +1,16 @@
+name: hls-ccdc
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - jupyterlab
+  - notebook
+  - earthengine-api
+  - geemap
+  - geopandas
+  - matplotlib
+  - numpy
+  - pandas
+  - pillow
+  - scipy
+  - shapely

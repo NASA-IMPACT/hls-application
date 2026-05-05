@@ -1,0 +1,6 @@
+# Generated notebook outputs
+notebooks/figures/*
+!notebooks/figures/.gitkeep
+
+# Keep the curated hotspot table tracked even though the repo root ignores CSVs
+!notebooks/top_100_forest_loss_hansen.csv
