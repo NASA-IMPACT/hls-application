@@ -1,0 +1,14 @@
+name: lasrc_validation
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - boto3
+  - gdal
+  - ipykernel
+  - jupyterlab
+  - matplotlib
+  - numpy
+  - pandas
+  - rasterio
+  - scipy
