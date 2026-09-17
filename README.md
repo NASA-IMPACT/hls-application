@@ -103,8 +103,58 @@ Add `--render-all-panels` only when needed. It creates a panel for every paired 
 - `data_source_mode: "s3"` reads the two S3 roots directly.
 - `s3_read_mode: "cache"` stores downloaded rasters under `<output_root>/_cache/`; delete that folder after a run if needed.
 - `comparison_stage` accepts `final`, `immediate`, or `auto`. Start with `final` unless both output trees retain comparable immediate files.
-- `threshold_mode: "reference"` applies the reference thresholds defined in the CLI. Use `custom` only for a study with explicitly approved alternative thresholds.
+- `threshold_mode: "reference"` applies the published per-band reference thresholds below. Use `custom` only for a study with an explicitly approved alternative threshold.
 - Leave `runtime_log_source` as `null` unless the two datasets have comparable logs.
+
+## Thresholds
+
+The pass/fail statistic is the absolute value of the **per-granule mean surface-reflectance difference**. A pair passes when that value is less than or equal to its selected threshold.
+
+### Built-In Reference Thresholds
+
+Set the following to use the built-in reference values:
+
+```json
+"threshold_mode": "reference",
+"threshold_units": "reflectance",
+"threshold_global_default": null
+```
+
+| Band | Final HLS output | Immediate S30 | Immediate L30 |
+|---|---:|---:|---:|
+| B01 | 0.0051 | 0.0053 | 0.0053 |
+| B02 | 0.0048 | 0.0056 | 0.0056 |
+| B03 | 0.0055 | 0.0054 | 0.0054 |
+| B04 | 0.0052 | 0.0066 | 0.0066 |
+| B05 | 0.0075 | n/a | 0.0099 |
+| B06 | 0.0093 | n/a | 0.0131 |
+| B07 | 0.0064 | n/a | 0.0087 |
+| B8A | 0.0075 | 0.0099 | n/a |
+| B11 | 0.0093 | 0.0131 | n/a |
+| B12 | 0.0064 | 0.0087 | n/a |
+
+Bands not listed in the applicable column receive no reference threshold and are reported as `NO_THRESHOLD`.
+
+### Custom 5-HLS-DN Threshold
+
+For a C-versus-Rust equivalence test, the agreed acceptance target can be a uniform **5 HLS DN**, where final HLS reflectance uses a scale factor of `0.0001`:
+
+```text
+5 HLS DN x 0.0001 = 0.0005 reflectance
+```
+
+Use this configuration to apply that threshold to every discovered band and stage:
+
+```json
+"threshold_mode": "custom",
+"threshold_units": "reflectance",
+"threshold_global_default": 0.0005,
+"final_output_thresholds": {},
+"immediate_thresholds_s30": {},
+"immediate_thresholds_l30": {}
+```
+
+Do **not** set `"threshold_units": "dn"` and `"threshold_global_default": 5` for an immediate-output comparison. In that mode, the CLI converts DN using the immediate raster encoding. For example, Landsat immediate outputs use `DN * 0.0000275 - 0.2`, so `5` would become `0.0001375`, not the intended 5-HLS-DN-equivalent threshold of `0.0005`.
 
 ## Outputs
 
