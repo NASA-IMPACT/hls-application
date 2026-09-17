@@ -30,6 +30,12 @@ mamba env create -f environment.yml
 mamba activate lasrc_validation
 ```
 
+If your terminal is using a different Conda environment, run the commands below through the validation environment explicitly:
+
+```bash
+mamba run -n lasrc_validation python scripts/run_lasrc_container_validation.py --help
+```
+
 Authenticate to AWS using your organization-approved method:
 
 ```bash
