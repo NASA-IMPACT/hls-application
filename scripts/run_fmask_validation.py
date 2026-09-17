@@ -6,12 +6,12 @@ Programmatic runner for the HLS Fmask acceptance notebook using Papermill.
 
 Usage:
     # From repo root:
-    python hls_validation_framework/scripts/run_fmask_validation.py
+    python scripts/run_fmask_validation.py
 
     # Custom config and output:
-    python hls_validation_framework/scripts/run_fmask_validation.py \
-        --config hls_validation_framework/config/fmask_acceptance_config.yaml \
-        --output hls_validation_framework/reports/my_run.ipynb
+    python scripts/run_fmask_validation.py \
+        --config config/fmask_acceptance_config.yaml \
+        --output reports/my_run.ipynb
 
 Requirements:
     pip install papermill
@@ -27,11 +27,11 @@ import datetime
 import os
 import sys
 
-# Framework root: one level above this script (hls_validation_framework/)
-FRAMEWORK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Repository root: one level above this script.
+REPOSITORY_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-NOTEBOOK = os.path.join(FRAMEWORK_ROOT, "notebooks", "HLS_Fmask_acceptance_test.ipynb")
-DEFAULT_CONFIG = os.path.join(FRAMEWORK_ROOT, "config", "fmask_acceptance_config.yaml")
+NOTEBOOK = os.path.join(REPOSITORY_ROOT, "notebooks", "HLS_Fmask_acceptance_test.ipynb")
+DEFAULT_CONFIG = os.path.join(REPOSITORY_ROOT, "config", "fmask_acceptance_config.yaml")
 
 
 def main():
@@ -53,7 +53,7 @@ def main():
 
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     notebook_out = args.output or os.path.join(
-        FRAMEWORK_ROOT, "reports", f"fmask_validation_{ts}.ipynb"
+        REPOSITORY_ROOT, "reports", f"fmask_validation_{ts}.ipynb"
     )
     os.makedirs(os.path.dirname(notebook_out), exist_ok=True)
 
