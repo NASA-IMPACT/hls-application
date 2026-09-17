@@ -37,9 +37,9 @@ thresholds:
   random_pass_pct: 99.5
 
 # ── Curated test granules (core test set) ────────────────────────────────────
-# These are granules from the prior Fmask5 scientific validation.
-# They cover the specific scene types where Fmask5 improves over Fmask4.7.
-# Add new entries when new improvement cases are identified.
+# Add scientifically validated granule IDs here when they are available.
+# Keep this list empty rather than using placeholder IDs. With an empty list,
+# the workflow skips curated cases and reports the random paired-scene result.
 #
 # scene_type options:
 #   snow_cloud_confusion  - snow/cloud misclassification (common Fmask4.7 failure)
@@ -49,23 +49,7 @@ thresholds:
 #   high_altitude         - thin cirrus detection
 #   other                 - other improvement cases
 # -----------------------------------------------------------------------------
-curated_granules:
-  # TODO: Replace these placeholder entries with real granule IDs from
-  #       the Fmask5 scientific validation (Trang / Qiang to populate).
-  - id: "HLS.S30.TPLACEHOLDER1.2024150T182901.v2.0"
-    satellite: "S30"
-    scene_type: "snow_cloud_confusion"
-    notes: "Replace with real granule — known snow/cloud confusion improvement case"
-
-  - id: "HLS.S30.TPLACEHOLDER2.2024085T083601.v2.0"
-    satellite: "S30"
-    scene_type: "coastal_water"
-    notes: "Replace with real granule — coastal water misclassification case"
-
-  - id: "HLS.L30.TPLACEHOLDER3.2024200T155824.v2.0"
-    satellite: "L30"
-    scene_type: "deep_shadow"
-    notes: "Replace with real granule — deep cloud shadow detection case"
+curated_granules: []
 
 # ── Random sample settings ───────────────────────────────────────────────────
 random_sample:

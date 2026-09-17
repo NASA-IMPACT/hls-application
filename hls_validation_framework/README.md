@@ -1,79 +1,38 @@
-# HLS Validation Framework
+# HLS Fmask Acceptance Validation
 
-Repeatable test suite for HLS container validation covering both **surface reflectance band regression** and **Fmask acceptance testing**.
+This workflow compares a candidate HLS `Fmask.tif` output collection with a
+scientifically validated golden reference collection. It evaluates agreement for
+cloud, cloud shadow, snow/ice, water, adjacency-to-cloud-shadow, and aerosol bits.
 
----
-
-## Folder Structure
+## Relevant Files
 
 ```
 hls_validation_framework/
-├── README.md                              # This file
-├── environment.yml                        # Conda environment (lpdaac_vitals)
-│
-├── config/                                # ← All parameters live here, not in notebooks
-│   ├── fmask_acceptance_config.yaml       # Fmask test: golden reference, granule list, thresholds
-│   └── sr_regression_config.yaml         # SR test: S3 bucket/prefix, statistical parameters
-│
-├── notebooks/
-│   ├── HLS_SR_acceptance_test.ipynb      # Tier 1: SR band regression + statistical Pass/Fail
-│   └── HLS_Fmask_acceptance_test.ipynb   # Tier 2: Fmask acceptance test
-│
-├── module/                                # Shared utility modules (loaded via %run -i)
-│   ├── data_access.ipynb                  # S3 access helpers
-│   ├── plotting.ipynb                     # Visualization helpers
-│   ├── fmask.ipynb                        # Fmask bit-decoding functions
-│   ├── ultilities.ipynb                   # General utilities
-│   └── read_file.ipynb                    # File reading helpers
-│
-├── scripts/
-│   ├── run_sr_acceptance.py               # CLI: statistical Pass/Fail from comparison CSV
-│   └── run_fmask_validation.py            # CLI: Papermill runner for Fmask notebook
-│
-├── outputs/                               # Per-band comparison figures (.png, gitignored)
-│   └── .gitkeep
-└── reports/                               # Timestamped CSVs and TXT reports (gitignored)
-    └── .gitkeep
+├── config/fmask_acceptance_config.yaml
+├── environment.yml
+├── notebooks/HLS_Fmask_acceptance_test.ipynb
+├── scripts/run_fmask_validation.py
+└── reports/                         # Generated reports; ignored by Git
 ```
 
----
+## Configure
 
-## Two-Tier Validation Strategy
+Edit [`config/fmask_acceptance_config.yaml`](config/fmask_acceptance_config.yaml):
 
-### Tier 1 — SR Band Regression Test
+- `golden_reference_s3_bucket` and `golden_reference_s3_prefix`: validated Fmask outputs.
+- `candidate_s3_bucket` and `candidate_s3_prefix`: output collection being tested.
+- `curated_granules`: optional known science cases. Leave it empty until real validated IDs are available.
+- `random_sample`: reproducible paired-granule sample and agreement threshold.
 
-**Notebook:** `notebooks/HLS_SR_acceptance_test.ipynb`  
-**Config:** `config/sr_regression_config.yaml`  
-**Script:** `scripts/run_sr_acceptance.py`  
-**Question:** *Did anything change across all output bands between two container builds?*  
-**Scope:** All `.tif` files — SR bands (B01–B12, B8A), VI indices (EVI, NDVI, …), angle bands, Fmask.  
-**Comparison:** `prod` container vs `dev` container (pixel-level numerical diff).  
-**Decision:** Wilcoxon signed-rank test + permutation test, per band; a band **passes** if both p ≥ α (default 0.05).  
-**When to run:** Every container rebuild.
-
-### Tier 2 — Fmask Acceptance Test
-
-**Notebook:** `notebooks/HLS_Fmask_acceptance_test.ipynb`  
-**Config:** `config/fmask_acceptance_config.yaml`  
-**Question:** *Did the container correctly apply the validated Fmask algorithm?*  
-**Scope:** `Fmask.tif` files only — bit-decoded per class (cloud / shadow / water / snow).  
-**Comparison:** New container vs **golden reference** (scientifically validated Fmask5 outputs).  
-**When to run:** Every container rebuild touching Fmask; every new Fmask release.
-
----
-
-## Quick Start
-
-### 1. Set up environment
+The configuration contains no credentials. Use either an AWS profile or standard
+AWS environment variables.
 
 ```bash
-mamba env create -f hls_validation_framework/environment.yml
-mamba activate lpdaac_vitals
+aws sso login --profile YOUR_PROFILE
+export AWS_PROFILE=YOUR_PROFILE
 ```
 
-### 2. Set AWS credentials
-
-Paste the temporary credentials from Kion / SSO into your shell:
+Or:
 
 ```bash
 export AWS_ACCESS_KEY_ID=...
@@ -81,127 +40,49 @@ export AWS_SECRET_ACCESS_KEY=...
 export AWS_SESSION_TOKEN=...
 ```
 
-### 3. Configure the experiment
+## Run Interactively
 
-Edit `config/sr_regression_config.yaml` with the S3 locations for the two builds:
-
-```yaml
-prod_s3_bucket: "hls-science-container-testing-018923174646-us-west-2-an"
-prod_s3_prefix: "outputs/exp1-recompile/prod/"
-
-dev_s3_bucket:  "hls-science-container-testing-018923174646-us-west-2-an"
-dev_s3_prefix:  "outputs/exp2-recompile/dev/"
-```
-
-No other changes are needed for a new experiment.
-
-### 4. Run the SR acceptance test
-
-**Option A — Interactive (recommended for first-time or exploratory runs):**
+Create the environment, then open the notebook from the framework directory so
+the relative configuration path resolves correctly.
 
 ```bash
-jupyter lab hls_validation_framework/notebooks/HLS_SR_acceptance_test.ipynb
+mamba env create -f hls_validation_framework/environment.yml
+mamba activate lpdaac_vitals
+cd hls_validation_framework/notebooks
+jupyter lab HLS_Fmask_acceptance_test.ipynb
 ```
 
-Run all cells top-to-bottom. The notebook will:
-- Pull comparison data from S3
-- Generate per-band scatter plots and difference maps → `outputs/`
-- Run Wilcoxon + permutation tests and print a Pass/Fail table
-- Save a timestamped CSV and conclusion to `reports/`
+Run the cells from top to bottom. Reports, CSV summaries, and optional comparison
+figures are written under `hls_validation_framework/reports/`.
 
-**Option B — CLI (recommended for repeated / automated runs):**
+## Run From the Command Line
+
+The runner executes the same notebook with Papermill and writes an executed
+notebook report.
 
 ```bash
-# Point at the comparison CSV generated by the notebook
-python hls_validation_framework/scripts/run_sr_acceptance.py \
-    --experiment exp2-recompile \
-    --csv        reports/sr_comparison_exp2-recompile.csv
+pip install papermill
 
-# Or let the script auto-locate the most recent CSV for that experiment
-python hls_validation_framework/scripts/run_sr_acceptance.py \
-    --experiment exp2-recompile
+python hls_validation_framework/scripts/run_fmask_validation.py \
+  --config hls_validation_framework/config/fmask_acceptance_config.yaml \
+  --output hls_validation_framework/reports/fmask_validation.ipynb
 ```
 
-The script reads `alpha` and `n_permutations` from `sr_regression_config.yaml` by default.  
-Override per-run with `--alpha 0.01` or `--n-permutations 4999`.
-
-**Run Fmask validation:**
+Convert a completed notebook to HTML if needed:
 
 ```bash
-python hls_validation_framework/scripts/run_fmask_validation.py --test fmask
+jupyter nbconvert --to html hls_validation_framework/reports/fmask_validation.ipynb
 ```
 
----
+## Interpretation
 
-## SR Acceptance Script — Full Options
+- Curated scenes, when configured, must meet `curated_pass_pct`.
+- Random paired scenes must meet `random_pass_pct`.
+- The run fails if any evaluated curated or random scene fails its applicable threshold.
+- An empty curated list is valid, but means the run only reports the random paired-scene result.
 
-```
-usage: run_sr_acceptance.py [-h] --experiment EXP [--csv CSV]
-                             [--config CONFIG] [--alpha ALPHA]
-                             [--n-permutations N] [--output-dir DIR] [--quiet]
+## GitHub Actions
 
-Options:
-  --experiment EXP     Label for this run (e.g. exp2-recompile)
-  --csv CSV            Path to comparison CSV; auto-located if omitted
-  --config CONFIG      Config YAML (default: config/sr_regression_config.yaml)
-  --alpha ALPHA        Significance level (default: from config, fallback 0.05)
-  --n-permutations N   Permutation resamples (default: from config, fallback 9999)
-  --output-dir DIR     Where to save reports (default: reports/)
-  --quiet              Print only the final PASS/FAIL verdict
-```
-
-**Exit codes:** `0` = PASS, `1` = FAIL, `2` = ERROR — suitable for CI/CD pipelines.
-
-Each run saves:
-- `reports/sr_acceptance_<experiment>_<timestamp>.csv` — per-band p-values and verdicts
-- `reports/sr_acceptance_<experiment>_<timestamp>.txt` — full narrative report including conclusion
-
----
-
-## Repeating Experiments (Reproducibility)
-
-Every run is fully reproducible. The `.txt` report records the exact CLI call used:
-
-```
-Command: python scripts/run_sr_acceptance.py --experiment exp2-recompile --csv reports/sr_comparison_exp2-recompile.csv
-```
-
-To compare two experiments:
-1. Run the notebook for each experiment with its S3 prefix set in the config.
-2. Call `run_sr_acceptance.py --experiment <label>` for each.
-3. Diff the two `.txt` reports in `reports/`.
-
----
-
-## Updating Config for a New Container Build
-
-Edit `config/sr_regression_config.yaml`:
-
-```yaml
-prod_s3_prefix: "outputs/<old-experiment>/prod/"
-dev_s3_prefix:  "outputs/<new-experiment>/dev/"
-```
-
-No notebook or script changes needed.
-
----
-
-## Updating for a New Fmask Release (Science Team)
-
-1. Upload validated Fmask outputs to:
-   ```
-   s3://hls-validation/golden-reference/fmask<VERSION>/
-   ```
-2. Edit `config/fmask_acceptance_config.yaml` — bump `fmask_version`, update `golden_reference_s3_prefix`, add new `curated_granules` if applicable.
-3. Commit and push — CI auto-triggers on config file changes.
-
----
-
-## CI / GitHub Actions
-
-Workflow: `.github/workflows/fmask_validation.yml`
-
-**Manual trigger:** GitHub → Actions → "HLS Validation Suite" → Run workflow  
-**Inputs:** `test_type` (fmask / sr / both), candidate S3 bucket and prefix.  
-**Auto-trigger:** Runs when either config file is updated on `main`.  
-**Artifacts:** HTML reports retained 90 days.
+`.github/workflows/fmask_validation.yml` provides an optional manual or
+configuration-triggered Fmask acceptance run. Repository AWS secrets must be
+configured before enabling it.

@@ -1,41 +1,49 @@
-# HLS Validation Suite
+# HLS Application
 
-Validation notebooks and repeatable container acceptance testing for the **Harmonized Landsat and Sentinel-2 (HLS)** product suite.
+This repository contains notebooks, utilities, and validation workflows for the
+Harmonized Landsat and Sentinel-2 (HLS) project. It is not limited to validation:
+the repository also includes example HLS applications and Google Earth Engine
+utilities.
 
----
-
-## Repository Structure
+## Repository Layout
 
 ```
-hls-validation/
-│
-├── hls_validation_framework/              # ← Repeatable validation framework
-│   ├── config/
-│   │   ├── fmask_acceptance_config.yaml  # Fmask test parameters
-│   │   └── sr_regression_config.yaml     # SR regression test parameters
-│   ├── notebooks/
-│   │   ├── HLS_Fmask_acceptance_test.ipynb
-│   │   └── HLS_validation_general.ipynb
-│   ├── module/                            # Shared utility modules
-│   ├── scripts/
-│   │   └── run_fmask_validation.py        # CLI runner (Papermill)
-│   └── README.md                          # Framework documentation
-│
-├── hls_validation/                        # Existing analysis notebooks (unchanged)
-│   ├── HLS_validation.ipynb
-│   ├── IGARSS_2026_paper_figures.ipynb
-│   └── module/
-│
-└── .github/
-    └── workflows/
-        └── fmask_validation.yml           # GitHub Actions CI
+.
+├── hls-notebooks/                 # HLS application notebooks
+│   ├── hls_query_by_granule.ipynb
+│   ├── hls_urbanization.ipynb
+│   └── hls_vegetation_phenology.ipynb
+├── hls-gee/                       # Google Earth Engine utilities
+│   └── gee_ccdc.py
+├── hls_validation_framework/      # Reusable validation resources
+│   ├── config/                    # Validation configuration files
+│   ├── notebooks/                 # Interactive validation notebooks
+│   ├── scripts/                   # Command-line validation runners
+│   └── README.md                  # Fmask validation instructions
+└── .github/workflows/             # Optional GitHub Actions workflows
 ```
 
-See **[`hls_validation_framework/README.md`](hls_validation_framework/README.md)** for full documentation on how to run the validation suite.
+## HLS Applications
 
----
+The notebooks in [`hls-notebooks/`](hls-notebooks/) demonstrate common HLS
+workflows, including granule discovery, urbanization analysis, and vegetation
+phenology. Their Python dependencies are listed in
+[`hls-notebooks/requirements.txt`](hls-notebooks/requirements.txt).
+
+[`hls-gee/`](hls-gee/) contains Google Earth Engine-oriented utilities for HLS
+analysis.
+
+## Validation
+
+The [`hls_validation_framework/`](hls_validation_framework/) directory contains
+reusable HLS validation materials. The Fmask acceptance workflow and instructions
+are documented in [`hls_validation_framework/README.md`](hls_validation_framework/README.md).
+
+The LaSRC container-comparison workflow is maintained on the
+[`lasrc_validation`](https://github.com/NASA-IMPACT/hls-application/tree/lasrc_validation)
+branch so it can evolve independently from the Fmask workflow.
 
 ## Related Repositories
 
-- [hls-science-container](https://github.com/NASA-IMPACT/hls-science-container) — HLS processing container
-- [hls_development](https://github.com/NASA-IMPACT/hls_development) — HLS development tracking
+- [hls-science-container](https://github.com/NASA-IMPACT/hls-science-container) - HLS processing container
+- [hls_development](https://github.com/NASA-IMPACT/hls_development) - HLS development tracking
