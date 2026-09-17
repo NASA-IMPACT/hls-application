@@ -36,8 +36,9 @@ analysis.
 ## Validation
 
 The [`hls_validation_framework/`](hls_validation_framework/) directory contains
-reusable HLS validation materials. The Fmask acceptance workflow and instructions
-are documented in [`hls_validation_framework/README.md`](hls_validation_framework/README.md).
+the focused Fmask acceptance workflow. Its configuration, interactive notebook,
+and command-line runner are documented in
+[`hls_validation_framework/README.md`](hls_validation_framework/README.md).
 
 The LaSRC container-comparison workflow is maintained on the
 [`lasrc_validation`](https://github.com/NASA-IMPACT/hls-application/tree/lasrc_validation)
