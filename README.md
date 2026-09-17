@@ -52,7 +52,9 @@ YOUR-BUCKET/your-experiment/pre/
 
 ## Visual Review: Notebook
 
-The notebook defaults to a final-output comparison of 10 granules.
+The notebook is configured for a small, visual review of up to 10 granules. Set
+`COMPARISON_STAGE`, the input roots, and optional granule filters in its first
+configuration cell for your experiment.
 
 1. Open `notebooks/LaSRC_container_validation.ipynb` in JupyterLab or Cursor.
 2. Select the `lasrc_validation` kernel.
@@ -109,6 +111,10 @@ Add `--render-all-panels` only when needed. It creates a panel for every paired 
 - `data_source_mode: "s3"` reads the two S3 roots directly.
 - `s3_read_mode: "cache"` stores downloaded rasters under `<output_root>/_cache/`; delete that folder after a run if needed.
 - `comparison_stage` accepts `final`, `immediate`, or `auto`. Start with `final` unless both output trees retain comparable immediate files.
+- `save_summary_plots: true` writes the overall summary plots for every CLI run.
+- `render_single_panel: true` writes one granule panel: the configured `panel_granule`, or the first matched granule when it is `null`.
+- `render_all_panels: false` is the safe default. Set it to `true`, or add the CLI flag `--render-all-panels`, to write a panel for every matched granule. This can take substantial time and storage.
+- `panel_bands: []` includes every discovered band in each panel. Provide a list such as `["B01", "B02", "B03"]` to limit panels to selected bands.
 - `threshold_mode: "reference"` applies the published per-band reference thresholds below. Use `custom` only for a study with an explicitly approved alternative threshold.
 - Leave `runtime_log_source` as `null` unless the two datasets have comparable logs.
 
@@ -170,3 +176,9 @@ Each run writes timestamped outputs under `output_root`:
 - `reports/lasrc_validation_metrics_*.csv`: metrics per granule, band, and stage.
 - `reports/summary_by_band_*.csv` and `overall_summary_*.csv`: aggregate results.
 - `plots/`: summary figures and requested granule panels.
+
+Notebook cell outputs are deliberately cleared before publication: they can be large,
+become stale when the input roots change, and may expose local paths or credential
+metadata. Run the notebook locally to create the same figures under
+`outputs/lasrc_validation/`. A selected credential-free panel can also be committed
+as a static documentation example when a shareable result is available.
